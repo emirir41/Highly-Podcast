@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Highly Podcast</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --accent-glow: rgba(99,102,241,0.3);
+  }
+
+  /* DARK TEMA (default) */
+  body.theme-dark {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0f0f8;
+    --text2: #9090b0;
+    --text3: #5a5a78;
+    --card-bg: #13131d;
+    --card-hover: #1c1c2a;
+    --nav-bg: rgba(10,10,15,0.85);
+    --tag-bg: rgba(99,102,241,0.12);
+  }
+
+  /* GLASS TEMA */
+  body.theme-glass {
+    --bg: #0d0d1a;
+    --bg2: rgba(255,255,255,0.03);
+    --bg3: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.1);
+    --text: #ffffff;
+    --text2: rgba(255,255,255,0.6);
+    --text3: rgba(255,255,255,0.3);
+    --card-bg: rgba(255,255,255,0.05);
+    --card-hover: rgba(255,255,255,0.09);
+    --nav-bg: rgba(13,13,26,0.7);
+    --tag-bg: rgba(99,102,241,0.15);
+  }
+
+  /* LIGHT TEMA */
+  body.theme-light {
+    --bg: #f5f5fa;
+    --bg2: #ededf5;
+    --bg3: #e5e5f0;
+    --border: rgba(0,0,0,0.08);
+    --text: #0d0d1a;
+    --text2: #5a5a78;
+    --text3: #9090b0;
+    --card-bg: #ffffff;
+    --card-hover: #f0f0fa;
+    --nav-bg: rgba(245,245,250,0.9);
+    --tag-bg: rgba(99,102,241,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-logo .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+  }
+
+  .nav-badge {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .theme-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+
+  .theme-btn:hover { background: var(--card-hover); color: var(--text); }
+
+  .home-btn {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+
+  .home-btn:hover { background: var(--card-hover); color: var(--text); }
+
+  .user-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .login-btn {
+    height: 34px;
+    padding: 0 16px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.2s;
+  }
+
+  .login-btn:hover { opacity: 0.85; }
+
+  .avatar-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .avatar-btn:hover { background: var(--card-hover); }
+
+  /* MAIN */
+  main {
+    padding-top: 60px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 64px 24px 48px;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--tag-bg);
+    border: 1px solid rgba(99,102,241,0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 24px;
+  }
+
+  .hero-stat {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-stat .num {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .hero-stat .lbl {
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  /* Featured */
+  .featured-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .featured-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  .featured-cover {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    display: block;
+  }
+
+  .featured-cover-placeholder {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+  }
+
+  .featured-info {
+    padding: 20px;
+  }
+
+  .featured-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .featured-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .featured-desc {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* SECTION */
+  .section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 64px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .section-sub {
+    font-size: 13px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  /* SERIES GRID */
+  .series-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+
+  .series-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.25s, box-shadow 0.25s, background 0.2s;
+    display: block;
+  }
+
+  .series-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    background: var(--card-hover);
+  }
+
+  .series-cover {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+  }
+
+  .series-cover-placeholder {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+  }
+
+  .series-body {
+    padding: 16px;
+  }
+
+  .series-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .series-desc {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .series-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .series-count {
+    font-size: 11px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .series-lock {
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--tag-bg);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  /* RECENT EPISODES */
+  .episodes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .episode-row {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .episode-row:hover {
+    background: var(--card-hover);
+    transform: translateX(4px);
+  }
+
+  .ep-cover {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .ep-cover-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+
+  .ep-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ep-series {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .ep-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ep-meta {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .ep-play {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+
+  .ep-play svg {
+    width: 16px;
+    height: 16px;
+    fill: white;
+    margin-left: 2px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text3);
+  }
+
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* SKELETON */
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg3) 25%, var(--card-hover) 50%, var(--bg3) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* LOADING OVERLAY */
+  #loading-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    transition: opacity 0.4s;
+  }
+
+  #loading-screen .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px;
+    text-align: center;
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 40px 16px 32px;
+      gap: 32px;
+    }
+
+    .hero-stats { gap: 16px; }
+
+    .series-grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+    }
+
+    .section { padding: 0 16px 48px; }
+  }
+
+  /* GRADIENT COLORS FOR PLACEHOLDERS */
+  .grad-1 { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+  .grad-2 { background: linear-gradient(135deg, #ec4899, #f43f5e); }
+  .grad-3 { background: linear-gradient(135deg, #14b8a6, #06b6d4); }
+  .grad-4 { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+  .grad-5 { background: linear-gradient(135deg, #10b981, #3b82f6); }
+  .grad-6 { background: linear-gradient(135deg, #a855f7, #ec4899); }
+</style>
+</head>
+<body class="theme-dark">
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="logo">🎙️ Highly Podcast</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <a href="index.html" class="nav-logo">
+      <div class="dot"></div>
+      Highly Podcast
+    </a>
+    <span class="nav-badge">BETA</span>
+  </div>
+  <div class="nav-right">
+    <button class="theme-btn" onclick="cycleTheme()" title="Tema değiştir" id="theme-icon">🌙</button>
+    <a href="https://highly.com.tr" class="home-btn" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9,22 9,12 15,12 15,22"/>
+      </svg>
+      highly.com.tr
+    </a>
+    <div class="user-area" id="user-area">
+      <a href="giris.html" class="login-btn">Giriş Yap</a>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main>
+
+  <!-- HERO -->
+  <section class="hero" id="hero-section">
+    <div class="hero-left">
+      <div class="hero-tag">🎙️ Highly Podcast</div>
+      <h1>Fikirleri <span>dinle,</span><br>dünyayı anla.</h1>
+      <p>Highly'nin özgün podcast serileri. Teknoloji, kültür, gündem ve daha fazlası — tamamen ücretsiz.</p>
+      <div class="hero-stats" id="hero-stats">
+        <div class="hero-stat">
+          <span class="num" id="stat-series">—</span>
+          <span class="lbl">Seri</span>
+        </div>
+        <div class="hero-stat">
+          <span class="num" id="stat-episodes">—</span>
+          <span class="lbl">Bölüm</span>
+        </div>
+        <div class="hero-stat">
+          <span class="num" id="stat-hours">—</span>
+          <span class="lbl">Saat içerik</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Featured Episode -->
+    <div id="featured-container">
+      <div class="featured-card skeleton" style="aspect-ratio:16/9;"></div>
+    </div>
+  </section>
+
+  <!-- SERİLER -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Seriler</div>
+        <div class="section-sub">Tüm podcast serileri</div>
+      </div>
+    </div>
+    <div class="series-grid" id="series-grid">
+      <!-- skeleton -->
+      <div class="series-card" style="pointer-events:none">
+        <div class="skeleton" style="aspect-ratio:1;"></div>
+        <div class="series-body">
+          <div class="skeleton" style="height:16px;width:70%;margin-bottom:8px;"></div>
+          <div class="skeleton" style="height:12px;width:90%;margin-bottom:4px;"></div>
+          <div class="skeleton" style="height:12px;width:60%;"></div>
+        </div>
+      </div>
+      <div class="series-card" style="pointer-events:none">
+        <div class="skeleton" style="aspect-ratio:1;"></div>
+        <div class="series-body">
+          <div class="skeleton" style="height:16px;width:70%;margin-bottom:8px;"></div>
+          <div class="skeleton" style="height:12px;width:90%;margin-bottom:4px;"></div>
+          <div class="skeleton" style="height:12px;width:60%;"></div>
+        </div>
+      </div>
+      <div class="series-card" style="pointer-events:none">
+        <div class="skeleton" style="aspect-ratio:1;"></div>
+        <div class="series-body">
+          <div class="skeleton" style="height:16px;width:70%;margin-bottom:8px;"></div>
+          <div class="skeleton" style="height:12px;width:90%;margin-bottom:4px;"></div>
+          <div class="skeleton" style="height:12px;width:60%;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SON BÖLÜMLER -->
+  <section class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Son Bölümler</div>
+        <div class="section-sub">En yeni yayınlar</div>
+      </div>
+    </div>
+    <div class="episodes-list" id="episodes-list">
+      <div class="episode-row" style="pointer-events:none">
+        <div class="skeleton ep-cover-placeholder"></div>
+        <div class="ep-info">
+          <div class="skeleton" style="height:11px;width:40%;margin-bottom:6px;"></div>
+          <div class="skeleton" style="height:14px;width:75%;margin-bottom:6px;"></div>
+          <div class="skeleton" style="height:12px;width:30%;"></div>
+        </div>
+      </div>
+      <div class="episode-row" style="pointer-events:none">
+        <div class="skeleton ep-cover-placeholder"></div>
+        <div class="ep-info">
+          <div class="skeleton" style="height:11px;width:40%;margin-bottom:6px;"></div>
+          <div class="skeleton" style="height:14px;width:75%;margin-bottom:6px;"></div>
+          <div class="skeleton" style="height:12px;width:30%;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>© 2025 <a href="https://highly.com.tr">Highly</a> · Podcast platformu</p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://ttuxfivcwdpyvhmybbna.supabase.co';
+const SUPABASE_KEY = 'BURAYA_ANON_KEY';
+
+var _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// TEMA
+const themes = ['dark','glass','light'];
+const themeIcons = { dark: '🌙', glass: '✨', light: '☀️' };
+
+function getTheme() {
+  return localStorage.getItem('highly_theme') || 'dark';
+}
+
+function applyTheme(t) {
+  document.body.className = 'theme-' + t;
+  document.getElementById('theme-icon').textContent = themeIcons[t];
+}
+
+function cycleTheme() {
+  const cur = getTheme();
+  const next = themes[(themes.indexOf(cur) + 1) % themes.length];
+  localStorage.setItem('highly_theme', next);
+  applyTheme(next);
+}
+
+applyTheme(getTheme());
+
+// FORMAT DURATION
+function formatDuration(secs) {
+  if (!secs) return '';
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  if (h > 0) return h + 's ' + m + 'dk';
+  return m + ' dk';
+}
+
+function formatDate(str) {
+  if (!str) return '';
+  const d = new Date(str);
+  return d.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
+}
+
+function gradClass(i) {
+  return 'grad-' + ((i % 6) + 1);
+}
+
+// AUTH
+async function initAuth() {
+  const { data: { session } } = await _sb.auth.getSession();
+  const area = document.getElementById('user-area');
+  if (session && session.user) {
+    // kullanıcı giriş yapmış, users tablosundan bilgi çek
+    const { data: u } = await _sb.from('users').select('username,avatarEmoji,avatarBg').eq('email', session.user.email).single();
+    if (u) {
+      area.innerHTML = `<a href="profil.html" class="avatar-btn" title="${u.username}" style="background:${u.avatarBg || 'var(--bg3)'}">${u.avatarEmoji || '👤'}</a>`;
+    }
+  }
+}
+
+// STATS
+async function loadStats() {
+  const [{ count: sc }, { count: ec }, { data: dur }] = await Promise.all([
+    _sb.from('podcast_series').select('*', { count:'exact', head:true }),
+    _sb.from('podcast_episodes').select('*', { count:'exact', head:true }),
+    _sb.from('podcast_episodes').select('duration_seconds')
+  ]);
+
+  document.getElementById('stat-series').textContent = sc || 0;
+  document.getElementById('stat-episodes').textContent = ec || 0;
+
+  if (dur) {
+    const totalSecs = dur.reduce((a, b) => a + (b.duration_seconds || 0), 0);
+    const hours = Math.floor(totalSecs / 3600);
+    document.getElementById('stat-hours').textContent = hours + '+';
+  }
+}
+
+// FEATURED
+async function loadFeatured() {
+  const { data: ep } = await _sb
+    .from('podcast_episodes')
+    .select('id, title, description, cover_url, duration_seconds, series_id, podcast_series(title, is_public)')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  const container = document.getElementById('featured-container');
+  if (!ep) {
+    container.innerHTML = '<div class="featured-card"><div class="featured-cover-placeholder grad-1">🎙️</div><div class="featured-info"><div class="featured-label">Öne Çıkan</div><div class="featured-title">Yakında...</div><div class="featured-desc">İlk bölümler çok yakında yayınlanacak.</div></div></div>';
+    return;
+  }
+
+  const locked = !ep.podcast_series?.is_public;
+  container.innerHTML = `
+    <a href="bolum.html?id=${ep.id}" class="featured-card" style="text-decoration:none">
+      ${ep.cover_url
+        ? `<img class="featured-cover" src="${ep.cover_url}" alt="${ep.title}">`
+        : `<div class="featured-cover-placeholder grad-1">🎙️</div>`
+      }
+      <div class="featured-info">
+        <div class="featured-label">🔥 Öne Çıkan · ${ep.podcast_series?.title || ''}</div>
+        <div class="featured-title">${ep.title}</div>
+        <div class="featured-desc">${ep.description || ''}</div>
+        ${locked ? '<div style="margin-top:8px;font-size:12px;color:var(--accent)">🔒 Giriş gerekli</div>' : ''}
+      </div>
+    </a>
+  `;
+}
+
+// SERİLER
+async function loadSeries() {
+  const { data: series } = await _sb
+    .from('podcast_series')
+    .select('id, title, description, cover_url, slug, is_public')
+    .order('created_at', { ascending: false });
+
+  const grid = document.getElementById('series-grid');
+
+  if (!series || series.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">🎙️</div><p>Henüz seri yok.</p></div>';
+    return;
+  }
+
+  // her seri için bölüm sayısı
+  const counts = await Promise.all(series.map(s =>
+    _sb.from('podcast_episodes').select('*', { count:'exact', head:true }).eq('series_id', s.id)
+  ));
+
+  grid.innerHTML = series.map((s, i) => `
+    <a href="seri.html?id=${s.id}" class="series-card">
+      ${s.cover_url
+        ? `<img class="series-cover" src="${s.cover_url}" alt="${s.title}">`
+        : `<div class="series-cover-placeholder ${gradClass(i)}">🎙️</div>`
+      }
+      <div class="series-body">
+        <div class="series-title">${s.title}</div>
+        <div class="series-desc">${s.description || 'Bu seri hakkında açıklama yok.'}</div>
+        <div class="series-meta">
+          <span class="series-count">🎵 ${counts[i]?.count || 0} bölüm</span>
+          ${!s.is_public ? '<span class="series-lock">🔒 Üye</span>' : ''}
+        </div>
+      </div>
+    </a>
+  `).join('');
+}
+
+// SON BÖLÜMLER
+async function loadRecentEpisodes() {
+  const { data: eps } = await _sb
+    .from('podcast_episodes')
+    .select('id, title, cover_url, duration_seconds, created_at, series_id, podcast_series(title, is_public)')
+    .order('created_at', { ascending: false })
+    .limit(6);
+
+  const list = document.getElementById('episodes-list');
+
+  if (!eps || eps.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">🎧</div><p>Henüz bölüm yok.</p></div>';
+    return;
+  }
+
+  list.innerHTML = eps.map((ep, i) => `
+    <a href="bolum.html?id=${ep.id}" class="episode-row">
+      ${ep.cover_url
+        ? `<img class="ep-cover" src="${ep.cover_url}" alt="${ep.title}">`
+        : `<div class="ep-cover-placeholder ${gradClass(i)}">🎵</div>`
+      }
+      <div class="ep-info">
+        <div class="ep-series">${ep.podcast_series?.title || ''} ${!ep.podcast_series?.is_public ? '· 🔒' : ''}</div>
+        <div class="ep-title">${ep.title}</div>
+        <div class="ep-meta">${formatDuration(ep.duration_seconds)} · ${formatDate(ep.created_at)}</div>
+      </div>
+      <div class="ep-play">
+        <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+      </div>
+    </a>
+  `).join('');
+}
+
+// INIT
+async function init() {
+  try {
+    await Promise.all([
+      initAuth(),
+      loadStats(),
+      loadFeatured(),
+      loadSeries(),
+      loadRecentEpisodes()
+    ]);
+  } catch(e) {
+    console.error(e);
+  } finally {
+    const ls = document.getElementById('loading-screen');
+    ls.classList.add('hidden');
+    setTimeout(() => ls.remove(), 500);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

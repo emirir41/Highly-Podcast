@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bölüm — Highly Podcast</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --accent-glow: rgba(99,102,241,0.3);
+  }
+
+  body.theme-dark {
+    --bg: #0a0a0f; --bg2: #111118; --bg3: #1a1a24;
+    --border: rgba(255,255,255,0.07); --text: #f0f0f8;
+    --text2: #9090b0; --text3: #5a5a78;
+    --card-bg: #13131d; --card-hover: #1c1c2a;
+    --nav-bg: rgba(10,10,15,0.85); --tag-bg: rgba(99,102,241,0.12);
+  }
+  body.theme-glass {
+    --bg: #0d0d1a; --bg2: rgba(255,255,255,0.03); --bg3: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.1); --text: #ffffff;
+    --text2: rgba(255,255,255,0.6); --text3: rgba(255,255,255,0.3);
+    --card-bg: rgba(255,255,255,0.05); --card-hover: rgba(255,255,255,0.09);
+    --nav-bg: rgba(13,13,26,0.7); --tag-bg: rgba(99,102,241,0.15);
+  }
+  body.theme-light {
+    --bg: #f5f5fa; --bg2: #ededf5; --bg3: #e5e5f0;
+    --border: rgba(0,0,0,0.08); --text: #0d0d1a;
+    --text2: #5a5a78; --text3: #9090b0;
+    --card-bg: #ffffff; --card-hover: #f0f0fa;
+    --nav-bg: rgba(245,245,250,0.9); --tag-bg: rgba(99,102,241,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; transition: background 0.3s, color 0.3s;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: var(--nav-bg);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-left { display: flex; align-items: center; gap: 10px; }
+  .nav-logo {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px;
+    color: var(--text); text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-logo .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.85)} }
+  .nav-badge {
+    font-size: 11px; font-weight: 500; color: var(--text3);
+    background: var(--bg3); border: 1px solid var(--border);
+    padding: 2px 8px; border-radius: 20px; letter-spacing: .5px;
+  }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .theme-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; transition: all .2s;
+  }
+  .theme-btn:hover { background: var(--card-hover); color: var(--text); }
+  .back-btn {
+    height: 34px; padding: 0 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text2); cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; text-decoration: none;
+    display: flex; align-items: center; gap: 6px; transition: all .2s;
+  }
+  .back-btn:hover { background: var(--card-hover); color: var(--text); }
+  .login-btn {
+    height: 34px; padding: 0 16px; border-radius: 8px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; text-decoration: none;
+    display: flex; align-items: center; transition: opacity .2s;
+  }
+  .login-btn:hover { opacity: .85; }
+  .avatar-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg3);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; text-decoration: none; transition: all .2s;
+  }
+  .avatar-btn:hover { background: var(--card-hover); }
+
+  /* ── LOADING ── */
+  #loading-screen {
+    position: fixed; inset: 0; background: var(--bg); z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px; transition: opacity .4s;
+  }
+  #loading-screen .logo { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading-screen.hidden { opacity: 0; pointer-events: none; }
+
+  /* ── MAIN LAYOUT ── */
+  main { padding-top: 60px; }
+  .page-wrap {
+    max-width: 860px; margin: 0 auto; padding: 48px 24px 80px;
+  }
+
+  /* ── BREADCRUMB ── */
+  .breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text3); margin-bottom: 32px;
+  }
+  .breadcrumb a { color: var(--accent); text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+  .breadcrumb span { color: var(--text3); }
+
+  /* ── EPISODE HEADER ── */
+  .ep-header {
+    display: grid; grid-template-columns: auto 1fr; gap: 28px;
+    align-items: flex-start; margin-bottom: 36px;
+  }
+  .ep-cover-wrap { position: relative; flex-shrink: 0; }
+  .ep-cover-img {
+    width: 160px; height: 160px; border-radius: 16px;
+    object-fit: cover; display: block;
+    box-shadow: 0 12px 40px rgba(0,0,0,.4);
+  }
+  .ep-cover-placeholder {
+    width: 160px; height: 160px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 52px; box-shadow: 0 12px 40px rgba(0,0,0,.4);
+  }
+  .ep-meta-wrap { padding-top: 4px; }
+  .ep-series-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600; color: var(--accent);
+    text-transform: uppercase; letter-spacing: .8px;
+    text-decoration: none; margin-bottom: 12px;
+    background: var(--tag-bg); border: 1px solid rgba(99,102,241,.2);
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .ep-series-link:hover { opacity: .8; }
+  .ep-title {
+    font-family: 'Syne', sans-serif; font-size: clamp(22px,4vw,34px);
+    font-weight: 800; line-height: 1.15; color: var(--text);
+    margin-bottom: 12px;
+  }
+  .ep-desc {
+    font-size: 14px; color: var(--text2); line-height: 1.7;
+    margin-bottom: 16px; max-width: 560px;
+  }
+  .ep-info-row {
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: wrap;
+  }
+  .ep-info-chip {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--text3);
+    background: var(--bg3); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 20px;
+  }
+
+  /* ── LOCK GATE ── */
+  #lock-gate {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 20px; padding: 48px 32px; text-align: center;
+    margin-bottom: 24px; display: none;
+  }
+  #lock-gate .lock-icon { font-size: 48px; margin-bottom: 16px; }
+  #lock-gate h3 {
+    font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700;
+    color: var(--text); margin-bottom: 10px;
+  }
+  #lock-gate p { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 24px; }
+  .gate-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 44px; padding: 0 24px; border-radius: 10px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    text-decoration: none; transition: opacity .2s;
+    box-shadow: 0 4px 20px var(--accent-glow);
+  }
+  .gate-btn:hover { opacity: .85; }
+
+  /* ── AUDIO PLAYER ── */
+  #player-wrap {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.2);
+  }
+
+  /* waveform visualizer */
+  .waveform-bar-row {
+    display: flex; align-items: center; gap: 2px;
+    height: 40px; margin-bottom: 16px; cursor: pointer;
+    position: relative; overflow: hidden;
+  }
+  .waveform-bar-row .wbar {
+    flex: 1; border-radius: 2px;
+    background: var(--bg3); transition: background .15s;
+    transform-origin: center;
+  }
+  .waveform-bar-row .wbar.played { background: var(--accent); }
+  .waveform-bar-row .wbar.ad-zone { background: rgba(251,191,36,.5) !important; }
+  .waveform-bar-row .wbar.ad-zone.played { background: #f59e0b !important; }
+
+  /* progress track */
+  .progress-track {
+    position: relative; height: 4px;
+    background: var(--bg3); border-radius: 4px;
+    margin-bottom: 10px; cursor: pointer; overflow: visible;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 4px; pointer-events: none;
+    transition: width .1s linear;
+  }
+  .progress-thumb {
+    position: absolute; top: 50%; transform: translate(-50%,-50%);
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+    pointer-events: none; transition: left .1s linear;
+  }
+  .ad-marker {
+    position: absolute; top: 50%; transform: translate(-50%,-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.3);
+    pointer-events: none; z-index: 2;
+  }
+
+  .time-row {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text3); font-variant-numeric: tabular-nums;
+    margin-bottom: 20px;
+  }
+
+  /* controls */
+  .ctrl-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; margin-bottom: 20px;
+  }
+  .ctrl-btn {
+    width: 40px; height: 40px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; transition: all .2s;
+  }
+  .ctrl-btn:hover { background: var(--card-hover); color: var(--text); }
+  .ctrl-btn.active { background: var(--tag-bg); color: var(--accent); border-color: rgba(99,102,241,.3); }
+  .play-pause-btn {
+    width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 24px var(--accent-glow);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .play-pause-btn:hover { transform: scale(1.07); box-shadow: 0 8px 32px var(--accent-glow); }
+  .play-pause-btn svg { width: 22px; height: 22px; fill: white; }
+
+  /* bottom row */
+  .bottom-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .volume-row {
+    display: flex; align-items: center; gap: 8px; flex: 1; max-width: 160px;
+  }
+  .volume-icon { font-size: 16px; color: var(--text3); flex-shrink: 0; cursor: pointer; }
+  .volume-slider {
+    flex: 1; -webkit-appearance: none; appearance: none;
+    height: 4px; background: var(--bg3); border-radius: 4px; outline: none; cursor: pointer;
+  }
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: var(--accent); cursor: pointer;
+  }
+
+  .speed-row { display: flex; align-items: center; gap: 6px; }
+  .speed-btn {
+    height: 28px; padding: 0 10px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text3); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif;
+  }
+  .speed-btn:hover { background: var(--card-hover); color: var(--text); }
+  .speed-btn.active { background: var(--tag-bg); color: var(--accent); border-color: rgba(99,102,241,.3); }
+
+  /* ── REKLAM BANNER ── */
+  #ad-banner {
+    display: none;
+    background: linear-gradient(135deg, rgba(245,158,11,.12), rgba(239,68,68,.08));
+    border: 1px solid rgba(245,158,11,.3);
+    border-radius: 16px; padding: 20px 24px;
+    margin-bottom: 16px; position: relative;
+    animation: fadeInUp .35s ease;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  #ad-banner .ad-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    color: #f59e0b; text-transform: uppercase;
+    display: flex; align-items: center; gap: 5px; margin-bottom: 8px;
+  }
+  #ad-banner .ad-title {
+    font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700;
+    color: var(--text); margin-bottom: 4px;
+  }
+  #ad-banner .ad-body { font-size: 13px; color: var(--text2); }
+  #ad-banner .ad-skip {
+    position: absolute; top: 16px; right: 16px;
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px; color: var(--text3); cursor: pointer;
+    background: var(--bg3); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 20px;
+    transition: all .2s;
+  }
+  #ad-banner .ad-skip:hover { background: var(--card-hover); color: var(--text); }
+  #ad-timer { font-weight: 700; color: var(--text); }
+
+  /* ad overlay on player */
+  #player-wrap.ad-playing { border-color: rgba(245,158,11,.4); }
+  #player-wrap.ad-playing .play-pause-btn {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    box-shadow: 0 6px 24px rgba(245,158,11,.4);
+  }
+
+  /* ── ACTIONS (like, share) ── */
+  .actions-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 32px; flex-wrap: wrap;
+  }
+  .like-btn {
+    height: 40px; padding: 0 18px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text2); cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+    transition: all .2s;
+  }
+  .like-btn:hover { background: var(--card-hover); color: var(--text); }
+  .like-btn.liked {
+    background: rgba(239,68,68,.12); color: #ef4444;
+    border-color: rgba(239,68,68,.3);
+  }
+  .like-count { font-size: 13px; font-weight: 600; }
+  .share-btn {
+    height: 40px; padding: 0 18px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg3);
+    color: var(--text2); cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+    transition: all .2s;
+  }
+  .share-btn:hover { background: var(--card-hover); color: var(--text); }
+
+  /* ── NOTES / TRANSCRIPT ── */
+  .ep-notes {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px; margin-bottom: 24px;
+  }
+  .ep-notes-title {
+    font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700;
+    color: var(--text); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ep-notes-body { font-size: 14px; color: var(--text2); line-height: 1.75; }
+
+  /* ── MORE EPISODES ── */
+  .more-section { margin-top: 40px; }
+  .more-title {
+    font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700;
+    color: var(--text); margin-bottom: 20px;
+  }
+  .episode-row {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px;
+    display: flex; align-items: center; gap: 16px;
+    cursor: pointer; text-decoration: none; color: inherit;
+    transition: background .2s, transform .2s; margin-bottom: 12px;
+  }
+  .episode-row:hover { background: var(--card-hover); transform: translateX(4px); }
+  .ep-thumb {
+    width: 56px; height: 56px; border-radius: 10px;
+    object-fit: cover; flex-shrink: 0;
+  }
+  .ep-thumb-ph {
+    width: 56px; height: 56px; border-radius: 10px;
+    flex-shrink: 0; display: flex; align-items: center;
+    justify-content: center; font-size: 24px;
+  }
+  .ep-info { flex: 1; min-width: 0; }
+  .ep-series-lbl {
+    font-size: 11px; color: var(--accent); font-weight: 500;
+    text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px;
+  }
+  .ep-name {
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600;
+    color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ep-dur { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .ep-play-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; box-shadow: 0 4px 14px var(--accent-glow);
+  }
+  .ep-play-icon svg { width: 14px; height: 14px; fill: white; margin-left: 1px; }
+
+  /* SKELETON */
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg3) 25%, var(--card-hover) 50%, var(--bg3) 75%);
+    background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(24px);
+    background: var(--card-bg); border: 1px solid var(--border);
+    color: var(--text); font-size: 13px; font-weight: 500;
+    padding: 10px 20px; border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+    opacity: 0; pointer-events: none; z-index: 500;
+    transition: opacity .25s, transform .25s;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border); padding: 24px;
+    text-align: center; color: var(--text3); font-size: 13px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .ep-header { grid-template-columns: 1fr; }
+    .ep-cover-img, .ep-cover-placeholder { width: 120px; height: 120px; }
+    #player-wrap { padding: 20px 16px 18px; }
+    .ctrl-row { gap: 8px; }
+    .play-pause-btn { width: 50px; height: 50px; }
+    .waveform-bar-row { height: 30px; }
+    .volume-row { display: none; }
+    .page-wrap { padding: 32px 16px 64px; }
+  }
+
+  /* GRADIENTS */
+  .grad-1{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+  .grad-2{background:linear-gradient(135deg,#ec4899,#f43f5e)}
+  .grad-3{background:linear-gradient(135deg,#14b8a6,#06b6d4)}
+  .grad-4{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+  .grad-5{background:linear-gradient(135deg,#10b981,#3b82f6)}
+  .grad-6{background:linear-gradient(135deg,#a855f7,#ec4899)}
+</style>
+</head>
+<body class="theme-dark">
+
+<!-- LOADING -->
+<div id="loading-screen">
+  <div class="logo">🎙️ Highly Podcast</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <a href="index.html" class="nav-logo">
+      <div class="dot"></div>
+      Highly Podcast
+    </a>
+    <span class="nav-badge">BETA</span>
+  </div>
+  <div class="nav-right">
+    <button class="theme-btn" onclick="cycleTheme()" title="Tema değiştir" id="theme-icon">🌙</button>
+    <a href="javascript:history.back()" class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Geri
+    </a>
+    <div id="user-area">
+      <a href="giris.html" class="login-btn">Giriş Yap</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+<div class="page-wrap">
+
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb" id="breadcrumb">
+    <a href="index.html">Ana Sayfa</a>
+    <span>›</span>
+    <span id="bc-series">…</span>
+    <span>›</span>
+    <span id="bc-title">Bölüm</span>
+  </div>
+
+  <!-- EP HEADER -->
+  <div class="ep-header" id="ep-header">
+    <div class="ep-cover-wrap">
+      <div class="ep-cover-placeholder grad-1 skeleton" id="ep-cover"></div>
+    </div>
+    <div class="ep-meta-wrap">
+      <a href="#" class="ep-series-link" id="ep-series-link">🎙️ Yükleniyor…</a>
+      <div class="ep-title skeleton" id="ep-title" style="height:36px;width:80%;margin-bottom:12px;"></div>
+      <div class="ep-desc skeleton" id="ep-desc" style="height:48px;width:90%;margin-bottom:16px;"></div>
+      <div class="ep-info-row" id="ep-info-row"></div>
+    </div>
+  </div>
+
+  <!-- LOCK GATE -->
+  <div id="lock-gate">
+    <div class="lock-icon">🔒</div>
+    <h3>Bu içerik üyelere özel</h3>
+    <p>Bu bölümü dinlemek için Highly hesabınıza giriş yapmanız gerekmektedir.</p>
+    <a href="giris.html" class="gate-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+        <polyline points="10 17 15 12 10 7"/>
+        <line x1="15" y1="12" x2="3" y2="12"/>
+      </svg>
+      Giriş Yap
+    </a>
+  </div>
+
+  <!-- AD BANNER -->
+  <div id="ad-banner">
+    <div class="ad-label">📢 Reklam</div>
+    <div class="ad-title" id="ad-title">Sponsor İçerik</div>
+    <div class="ad-body" id="ad-body"></div>
+    <div class="ad-skip" id="ad-skip-btn">
+      Geç <span id="ad-timer">5</span>s
+    </div>
+  </div>
+
+  <!-- AUDIO PLAYER -->
+  <div id="player-wrap">
+    <!-- Waveform visualizer -->
+    <div class="waveform-bar-row" id="waveform" title="Tıkla: konuma atla"></div>
+
+    <!-- Progress bar -->
+    <div class="progress-track" id="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      <div class="progress-thumb" id="progress-thumb" style="left:0%"></div>
+    </div>
+
+    <!-- Time -->
+    <div class="time-row">
+      <span id="time-cur">0:00</span>
+      <span id="time-dur">0:00</span>
+    </div>
+
+    <!-- Controls -->
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="btn-15back" title="15 saniye geri">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38"/>
+          <text x="8" y="16" font-size="6" fill="currentColor" stroke="none" font-family="sans-serif" font-weight="bold">15</text>
+        </svg>
+      </button>
+      <button class="play-pause-btn" id="btn-play" title="Oynat / Durdur">
+        <svg id="icon-play" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+        <svg id="icon-pause" viewBox="0 0 24 24" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      </button>
+      <button class="ctrl-btn" id="btn-15fwd" title="15 saniye ileri">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
+          <text x="8" y="16" font-size="6" fill="currentColor" stroke="none" font-family="sans-serif" font-weight="bold">15</text>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom row -->
+    <div class="bottom-row">
+      <div class="volume-row">
+        <span class="volume-icon" id="vol-icon">🔊</span>
+        <input type="range" class="volume-slider" id="vol-slider" min="0" max="1" step="0.01" value="1">
+      </div>
+      <div class="speed-row" id="speed-row"></div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions-row" id="actions-row">
+    <button class="like-btn" id="like-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+      <span class="like-count" id="like-count">0</span>
+    </button>
+    <button class="share-btn" id="share-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+      Paylaş
+    </button>
+  </div>
+
+  <!-- EPISODE NOTES -->
+  <div class="ep-notes" id="ep-notes" style="display:none">
+    <div class="ep-notes-title">📄 Bölüm Notları</div>
+    <div class="ep-notes-body" id="ep-notes-body"></div>
+  </div>
+
+  <!-- MORE FROM SERIES -->
+  <div class="more-section" id="more-section" style="display:none">
+    <div class="more-title">Serideki Diğer Bölümler</div>
+    <div id="more-list"></div>
+  </div>
+
+</div>
+</main>
+
+<footer>
+  <p>© 2025 <a href="https://highly.com.tr">Highly</a> · Podcast platformu</p>
+</footer>
+
+<script>
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   CONFIG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const SUPABASE_URL = 'https://ttuxfivcwdpyvhmybbna.supabase.co';
+const SUPABASE_KEY = 'BURAYA_ANON_KEY';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* Reklam konfig — kendi reklamlarınızı buraya ekleyin
+   Supabase'de 'ads' tablosu kullanıyorsanız loadAds() fonksiyonu dinamik yükler.
+   ad_audio_url: null ise sadece banner gösterilir, null değilse reklam sesi çalınır. */
+const DEFAULT_ADS = [
+  {
+    id: 'ad1',
+    title: 'Highly Premium ile reklamsız dinle',
+    body: 'Tüm bölümlere sınırsız erişim, reklamsız dinleme ve özel içerikler için Highly Premium\'a geçin.',
+    skip_after: 5,          // kaç saniye sonra geç butonu aktif
+    ad_audio_url: null,     // reklam ses dosyası URL (yoksa null)
+    duration: 15,           // banner görünme süresi (saniye)
+    link: 'https://highly.com.tr/premium'
+  }
+];
+
+/* Reklamın bölüm içindeki pozisyonları (saniye cinsinden)
+   Otomatik hesaplama: hesapAdPoints() fonksiyonu süreye göre ayarlar. */
+const AD_INTERVAL = 600; // Her X saniyede bir reklam (600 = 10 dk)
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   THEME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const themes = ['dark','glass','light'];
+const themeIcons = { dark:'🌙', glass:'✨', light:'☀️' };
+
+function getTheme() { return localStorage.getItem('highly_theme') || 'dark'; }
+function applyTheme(t) {
+  document.body.className = 'theme-' + t;
+  document.getElementById('theme-icon').textContent = themeIcons[t];
+}
+function cycleTheme() {
+  const cur = getTheme();
+  const next = themes[(themes.indexOf(cur)+1) % themes.length];
+  localStorage.setItem('highly_theme', next);
+  applyTheme(next);
+}
+applyTheme(getTheme());
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   HELPERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function gradClass(i) { return 'grad-' + ((i % 6) + 1); }
+
+function fmtTime(s) {
+  s = Math.floor(s || 0);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return h + ':' + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  return m + ':' + String(sec).padStart(2,'0');
+}
+
+function fmtDate(str) {
+  if (!str) return '';
+  return new Date(str).toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
+}
+
+function fmtDur(secs) {
+  if (!secs) return '';
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  return h > 0 ? h + 's ' + m + 'dk' : m + ' dk';
+}
+
+function toast(msg, dur = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   URL PARAM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const episodeId = new URLSearchParams(location.search).get('id');
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   AUDIO ENGINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const audio = new Audio();
+audio.preload = 'metadata';
+
+// State
+let isPlaying = false;
+let isMuted = false;
+let currentSpeed = 1;
+const speeds = [0.75, 1, 1.25, 1.5, 2];
+
+// Ad state
+let adPoints = [];       // saniye cinsinden reklam noktaları
+let passedAds = new Set(); // geçilmiş reklam noktası indeksleri
+let isAdPlaying = false;
+let adQueue = [];
+let currentAd = null;
+let adAudio = null;
+let adSkipTimer = null;
+let adCountdown = 0;
+let mainPositionBeforeAd = 0;
+
+// Waveform bars (sahte dalga, gerçek dalga için Web Audio API gerekir)
+const BAR_COUNT = 80;
+let waveHeights = [];
+
+/* ── Waveform oluştur ── */
+function buildWaveform(duration) {
+  const wf = document.getElementById('waveform');
+  wf.innerHTML = '';
+  waveHeights = [];
+  for (let i = 0; i < BAR_COUNT; i++) {
+    // Doğal görünüm için rastgele fakat yumuşak yükseklikler
+    const h = 20 + Math.random() * 80;
+    waveHeights.push(h);
+    const bar = document.createElement('div');
+    bar.className = 'wbar';
+    bar.style.height = h + '%';
+    wf.appendChild(bar);
+  }
+  // Reklam bölgelerini işaretle
+  adPoints.forEach(pt => {
+    const idx = Math.floor((pt / duration) * BAR_COUNT);
+    for (let j = Math.max(0,idx-1); j <= Math.min(BAR_COUNT-1,idx+1); j++) {
+      wf.children[j]?.classList.add('ad-zone');
+    }
+  });
+  // Tıklama ile konum atla
+  wf.addEventListener('click', (e) => {
+    if (isAdPlaying) return;
+    const rect = wf.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    audio.currentTime = ratio * audio.duration;
+  });
+}
+
+/* ── Progress güncelle ── */
+function updateProgress() {
+  if (!audio.duration || isAdPlaying) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-thumb').style.left = pct + '%';
+  document.getElementById('time-cur').textContent = fmtTime(audio.currentTime);
+
+  // Waveform güncelle
+  const wf = document.getElementById('waveform');
+  const bars = wf.querySelectorAll('.wbar');
+  const playedCount = Math.floor((audio.currentTime / audio.duration) * BAR_COUNT);
+  bars.forEach((b, i) => {
+    if (i < playedCount) b.classList.add('played');
+    else b.classList.remove('played');
+  });
+
+  // Reklam noktası kontrolü
+  checkAdPoints();
+}
+
+/* ── Reklam noktalarını hesapla ── */
+function calcAdPoints(duration) {
+  const pts = [];
+  if (!duration || duration < AD_INTERVAL * 1.5) return pts; // kısa içerikte reklam yok
+  let t = AD_INTERVAL;
+  while (t < duration - 60) { // son 1 dakikada reklam olmaz
+    pts.push(t);
+    t += AD_INTERVAL;
+  }
+  return pts;
+}
+
+/* ── Progress bar tıklama ── */
+document.getElementById('progress-track').addEventListener('click', (e) => {
+  if (isAdPlaying || !audio.duration) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  audio.currentTime = ratio * audio.duration;
+});
+
+/* ── Reklam noktası kontrol ── */
+function checkAdPoints() {
+  if (isAdPlaying) return;
+  adPoints.forEach((pt, idx) => {
+    if (!passedAds.has(idx) && audio.currentTime >= pt) {
+      passedAds.add(idx);
+      triggerAd();
+    }
+  });
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   REKLAM SİSTEMİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function triggerAd() {
+  const ad = DEFAULT_ADS[Math.floor(Math.random() * DEFAULT_ADS.length)];
+  if (!ad) return;
+  mainPositionBeforeAd = audio.currentTime;
+
+  // Ana sesi fade-out yap
+  fadeOut(audio, 600, () => {
+    audio.pause();
+    isPlaying = false;
+    updatePlayBtn();
+    startAdPlayback(ad);
+  });
+}
+
+function fadeOut(audioEl, ms, cb) {
+  const step = 50;
+  const decrement = audioEl.volume / (ms / step);
+  const orig = audioEl.volume;
+  const interval = setInterval(() => {
+    audioEl.volume = Math.max(0, audioEl.volume - decrement);
+    if (audioEl.volume <= 0) {
+      clearInterval(interval);
+      audioEl.volume = orig; // sıfırlamadan önce original değeri geri al
+      if (cb) cb();
+    }
+  }, step);
+}
+
+function fadeIn(audioEl, targetVol, ms) {
+  audioEl.volume = 0;
+  const step = 50;
+  const increment = targetVol / (ms / step);
+  const interval = setInterval(() => {
+    audioEl.volume = Math.min(targetVol, audioEl.volume + increment);
+    if (audioEl.volume >= targetVol) clearInterval(interval);
+  }, step);
+}
+
+function startAdPlayback(ad) {
+  currentAd = ad;
+  isAdPlaying = true;
+  adCountdown = ad.skip_after;
+
+  // Player görselini güncelle
+  document.getElementById('player-wrap').classList.add('ad-playing');
+
+  // Banner göster
+  const banner = document.getElementById('ad-banner');
+  document.getElementById('ad-title').textContent = ad.title;
+  document.getElementById('ad-body').textContent = ad.body;
+  document.getElementById('ad-timer').textContent = ad.skip_after;
+  banner.style.display = 'block';
+
+  // Skip geri sayım
+  const skipBtn = document.getElementById('ad-skip-btn');
+  skipBtn.style.cursor = 'default';
+  skipBtn.style.opacity = '0.5';
+
+  adSkipTimer = setInterval(() => {
+    adCountdown--;
+    document.getElementById('ad-timer').textContent = adCountdown;
+    if (adCountdown <= 0) {
+      clearInterval(adSkipTimer);
+      skipBtn.style.cursor = 'pointer';
+      skipBtn.style.opacity = '1';
+      skipBtn.onclick = skipAd;
+      skipBtn.innerHTML = '✕ Geç';
+    }
+  }, 1000);
+
+  // Reklam sesi varsa çal
+  if (ad.ad_audio_url) {
+    adAudio = new Audio(ad.ad_audio_url);
+    adAudio.volume = 1;
+    adAudio.play().catch(() => {});
+    adAudio.addEventListener('ended', () => endAd());
+  } else {
+    // Ses yoksa süre kadar bekle, sonra otomatik bitir
+    setTimeout(() => {
+      if (isAdPlaying) endAd();
+    }, ad.duration * 1000);
+  }
+}
+
+function skipAd() {
+  if (adCountdown > 0) return; // henüz geçilemez
+  endAd();
+}
+
+function endAd() {
+  clearInterval(adSkipTimer);
+  isAdPlaying = false;
+  currentAd = null;
+
+  if (adAudio) { adAudio.pause(); adAudio = null; }
+
+  // Banner gizle
+  document.getElementById('ad-banner').style.display = 'none';
+  document.getElementById('player-wrap').classList.remove('ad-playing');
+
+  // Ana sesi devam ettir (fade-in ile)
+  audio.currentTime = mainPositionBeforeAd;
+  audio.play().then(() => {
+    isPlaying = true;
+    updatePlayBtn();
+    fadeIn(audio, parseFloat(document.getElementById('vol-slider').value), 800);
+  }).catch(() => {});
+}
+
+/* Skip butonuna başlangıçta handler yok, sadece geri sayım dolunca eklenir */
+document.getElementById('ad-skip-btn').onclick = null;
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   PLAY / PAUSE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function updatePlayBtn() {
+  document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
+  document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
+}
+
+document.getElementById('btn-play').addEventListener('click', () => {
+  if (isAdPlaying) return;
+  if (audio.paused) {
+    audio.play().then(() => { isPlaying = true; updatePlayBtn(); }).catch(() => {});
+  } else {
+    audio.pause(); isPlaying = false; updatePlayBtn();
+  }
+});
+
+document.getElementById('btn-15back').addEventListener('click', () => {
+  if (!isAdPlaying) audio.currentTime = Math.max(0, audio.currentTime - 15);
+});
+document.getElementById('btn-15fwd').addEventListener('click', () => {
+  if (!isAdPlaying) audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 15);
+});
+
+/* ── Ses seviyesi ── */
+document.getElementById('vol-slider').addEventListener('input', (e) => {
+  audio.volume = parseFloat(e.target.value);
+  isMuted = audio.volume === 0;
+  document.getElementById('vol-icon').textContent = audio.volume === 0 ? '🔇' : audio.volume < 0.5 ? '🔉' : '🔊';
+});
+document.getElementById('vol-icon').addEventListener('click', () => {
+  if (audio.volume > 0) {
+    audio._savedVol = audio.volume;
+    audio.volume = 0;
+    document.getElementById('vol-slider').value = 0;
+    document.getElementById('vol-icon').textContent = '🔇';
+  } else {
+    audio.volume = audio._savedVol || 1;
+    document.getElementById('vol-slider').value = audio.volume;
+    document.getElementById('vol-icon').textContent = '🔊';
+  }
+});
+
+/* ── Hız butonları ── */
+function buildSpeedBtns() {
+  const row = document.getElementById('speed-row');
+  speeds.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'speed-btn' + (s === 1 ? ' active' : '');
+    btn.textContent = s + 'x';
+    btn.addEventListener('click', () => {
+      currentSpeed = s;
+      audio.playbackRate = s;
+      row.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    row.appendChild(btn);
+  });
+}
+buildSpeedBtns();
+
+/* ── Audio events ── */
+audio.addEventListener('timeupdate', updateProgress);
+audio.addEventListener('loadedmetadata', () => {
+  document.getElementById('time-dur').textContent = fmtTime(audio.duration);
+  adPoints = calcAdPoints(audio.duration);
+  buildWaveform(audio.duration);
+  // Progress bar'a ad marker ekle
+  const track = document.getElementById('progress-track');
+  adPoints.forEach(pt => {
+    const marker = document.createElement('div');
+    marker.className = 'ad-marker';
+    marker.style.left = ((pt / audio.duration) * 100) + '%';
+    marker.title = 'Reklam noktası';
+    track.appendChild(marker);
+  });
+});
+audio.addEventListener('ended', () => { isPlaying = false; updatePlayBtn(); });
+audio.addEventListener('error', () => toast('⚠️ Ses dosyası yüklenemedi.'));
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   AUTH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+let currentUser = null;
+let currentSession = null;
+
+async function initAuth() {
+  const { data: { session } } = await _sb.auth.getSession();
+  currentSession = session;
+  const area = document.getElementById('user-area');
+  if (session?.user) {
+    currentUser = session.user;
+    const { data: u } = await _sb.from('users').select('username,avatarEmoji,avatarBg')
+      .eq('email', session.user.email).single();
+    if (u) {
+      area.innerHTML = `<a href="profil.html" class="avatar-btn" title="${u.username}" style="background:${u.avatarBg||'var(--bg3)'}">${u.avatarEmoji||'👤'}</a>`;
+    }
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   LIKE SİSTEMİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+let likeCount = 0;
+let userLiked = false;
+
+async function loadLikes(epId) {
+  // Toplam beğeni sayısı
+  const { count } = await _sb.from('episode_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('episode_id', epId);
+  likeCount = count || 0;
+  document.getElementById('like-count').textContent = likeCount;
+
+  // Kullanıcı beğenmiş mi?
+  if (currentUser) {
+    const { data } = await _sb.from('episode_likes')
+      .select('id')
+      .eq('episode_id', epId)
+      .eq('user_id', currentUser.id)
+      .single();
+    userLiked = !!data;
+    if (userLiked) document.getElementById('like-btn').classList.add('liked');
+  }
+}
+
+document.getElementById('like-btn').addEventListener('click', async () => {
+  if (!currentUser) {
+    toast('❤️ Beğenmek için giriş yapmalısınız.', 3000);
+    return;
+  }
+  const btn = document.getElementById('like-btn');
+  if (userLiked) {
+    // Beğeniyi kaldır
+    const { error } = await _sb.from('episode_likes')
+      .delete().eq('episode_id', episodeId).eq('user_id', currentUser.id);
+    if (!error) {
+      userLiked = false; likeCount--;
+      btn.classList.remove('liked');
+      document.getElementById('like-count').textContent = likeCount;
+      toast('💔 Beğeni kaldırıldı.');
+    }
+  } else {
+    // Beğen
+    const { error } = await _sb.from('episode_likes')
+      .insert({ episode_id: episodeId, user_id: currentUser.id });
+    if (!error) {
+      userLiked = true; likeCount++;
+      btn.classList.add('liked');
+      document.getElementById('like-count').textContent = likeCount;
+      toast('❤️ Beğenildi!');
+    }
+  }
+});
+
+/* Paylaş */
+document.getElementById('share-btn').addEventListener('click', async () => {
+  const url = location.href;
+  if (navigator.share) {
+    try { await navigator.share({ title: document.title, url }); } catch(_) {}
+  } else {
+    await navigator.clipboard.writeText(url).catch(() => {});
+    toast('🔗 Link kopyalandı!');
+  }
+});
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   EPISODE LOAD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+async function loadEpisode() {
+  if (!episodeId) {
+    document.getElementById('ep-title').textContent = 'Bölüm bulunamadı';
+    document.getElementById('ep-desc').textContent = 'Geçerli bir bölüm ID\'si belirtilmedi.';
+    return;
+  }
+
+  const { data: ep, error } = await _sb
+    .from('podcast_episodes')
+    .select('*, podcast_series(id, title, slug, is_public, cover_url)')
+    .eq('id', episodeId)
+    .single();
+
+  if (error || !ep) {
+    document.getElementById('ep-title').textContent = 'Bölüm bulunamadı';
+    return;
+  }
+
+  // Başlık
+  document.title = ep.title + ' — Highly Podcast';
+
+  // Breadcrumb
+  document.getElementById('bc-series').textContent = ep.podcast_series?.title || 'Seri';
+  document.getElementById('bc-title').textContent = ep.title;
+
+  // Cover
+  const coverEl = document.getElementById('ep-cover');
+  if (ep.cover_url || ep.podcast_series?.cover_url) {
+    const src = ep.cover_url || ep.podcast_series?.cover_url;
+    coverEl.outerHTML = `<img class="ep-cover-img" id="ep-cover" src="${src}" alt="${ep.title}">`;
+  } else {
+    coverEl.className = 'ep-cover-placeholder grad-1';
+    coverEl.textContent = '🎙️';
+  }
+
+  // Seri linki
+  const seriesLink = document.getElementById('ep-series-link');
+  seriesLink.textContent = '🎙️ ' + (ep.podcast_series?.title || 'Seri');
+  if (ep.podcast_series?.id) seriesLink.href = 'seri.html?id=' + ep.podcast_series.id;
+
+  // Başlık & açıklama
+  document.getElementById('ep-title').className = 'ep-title';
+  document.getElementById('ep-title').textContent = ep.title;
+  document.getElementById('ep-desc').className = 'ep-desc';
+  document.getElementById('ep-desc').textContent = ep.description || '';
+
+  // Meta chips
+  const infoRow = document.getElementById('ep-info-row');
+  infoRow.innerHTML = `
+    ${ep.duration_seconds ? `<div class="ep-info-chip">⏱ ${fmtDur(ep.duration_seconds)}</div>` : ''}
+    ${ep.created_at ? `<div class="ep-info-chip">📅 ${fmtDate(ep.created_at)}</div>` : ''}
+    ${!ep.podcast_series?.is_public ? '<div class="ep-info-chip" style="color:var(--accent)">🔒 Üye içeriği</div>' : ''}
+  `;
+
+  // Giriş kontrolü: özel seri + kullanıcı giriş yapmamışsa player'ı gizle
+  const isLocked = !ep.podcast_series?.is_public && !currentUser;
+  if (isLocked) {
+    document.getElementById('player-wrap').style.display = 'none';
+    document.getElementById('lock-gate').style.display = 'block';
+    document.getElementById('actions-row').style.display = 'none';
+  } else {
+    // Ses yükle
+    if (ep.audio_url) {
+      audio.src = ep.audio_url;
+    } else {
+      // Test: gerçek ses URL'si yoksa placeholder
+      // audio.src = 'https://example.com/test.mp3';
+      document.getElementById('time-dur').textContent = fmtTime(ep.duration_seconds);
+      // Waveform yine de oluştur
+      adPoints = calcAdPoints(ep.duration_seconds || 1800);
+      buildWaveform(ep.duration_seconds || 1800);
+    }
+  }
+
+  // Bölüm notları
+  if (ep.notes) {
+    document.getElementById('ep-notes').style.display = 'block';
+    document.getElementById('ep-notes-body').textContent = ep.notes;
+  }
+
+  // Beğenileri yükle
+  await loadLikes(episodeId);
+
+  // Serideki diğer bölümler
+  if (ep.podcast_series?.id) {
+    loadMoreEpisodes(ep.podcast_series.id, episodeId);
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   MORE EPISODES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+async function loadMoreEpisodes(seriesId, currentId) {
+  const { data: eps } = await _sb
+    .from('podcast_episodes')
+    .select('id, title, cover_url, duration_seconds, created_at')
+    .eq('series_id', seriesId)
+    .neq('id', currentId)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (!eps || eps.length === 0) return;
+
+  const sec = document.getElementById('more-section');
+  const list = document.getElementById('more-list');
+  sec.style.display = 'block';
+
+  list.innerHTML = eps.map((ep, i) => `
+    <a href="bolum.html?id=${ep.id}" class="episode-row">
+      ${ep.cover_url
+        ? `<img class="ep-thumb" src="${ep.cover_url}" alt="${ep.title}">`
+        : `<div class="ep-thumb-ph ${gradClass(i)}">🎵</div>`
+      }
+      <div class="ep-info">
+        <div class="ep-name">${ep.title}</div>
+        <div class="ep-dur">${fmtDur(ep.duration_seconds)} · ${fmtDate(ep.created_at)}</div>
+      </div>
+      <div class="ep-play-icon">
+        <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+      </div>
+    </a>
+  `).join('');
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   INIT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+async function init() {
+  try {
+    await initAuth();
+    await loadEpisode();
+  } catch(e) {
+    console.error(e);
+  } finally {
+    const ls = document.getElementById('loading-screen');
+    ls.classList.add('hidden');
+    setTimeout(() => ls.remove(), 500);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — Highly Podcast</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --accent-glow: rgba(99,102,241,0.3);
+    --danger: #ef4444;
+    --success: #10b981;
+    --warning: #f59e0b;
+  }
+
+  body.theme-dark {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0f0f8;
+    --text2: #9090b0;
+    --text3: #5a5a78;
+    --card-bg: #13131d;
+    --card-hover: #1c1c2a;
+    --nav-bg: rgba(10,10,15,0.92);
+    --tag-bg: rgba(99,102,241,0.12);
+    --input-bg: #1a1a24;
+  }
+
+  body.theme-glass {
+    --bg: #0d0d1a;
+    --bg2: rgba(255,255,255,0.03);
+    --bg3: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.1);
+    --text: #ffffff;
+    --text2: rgba(255,255,255,0.6);
+    --text3: rgba(255,255,255,0.3);
+    --card-bg: rgba(255,255,255,0.05);
+    --card-hover: rgba(255,255,255,0.09);
+    --nav-bg: rgba(13,13,26,0.8);
+    --tag-bg: rgba(99,102,241,0.15);
+    --input-bg: rgba(255,255,255,0.07);
+  }
+
+  body.theme-light {
+    --bg: #f5f5fa;
+    --bg2: #ededf5;
+    --bg3: #e5e5f0;
+    --border: rgba(0,0,0,0.08);
+    --text: #0d0d1a;
+    --text2: #5a5a78;
+    --text3: #9090b0;
+    --card-bg: #ffffff;
+    --card-hover: #f0f0fa;
+    --nav-bg: rgba(245,245,250,0.95);
+    --tag-bg: rgba(99,102,241,0.1);
+    --input-bg: #f0f0fa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-left { display: flex; align-items: center; gap: 12px; }
+
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 17px;
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-logo .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100%{opacity:1;transform:scale(1);}
+    50%{opacity:0.6;transform:scale(0.85);}
+  }
+
+  .admin-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+
+  .theme-btn {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+
+  .theme-btn:hover { background: var(--card-hover); }
+
+  .home-btn {
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+  }
+
+  .home-btn:hover { background: var(--card-hover); color: var(--text); }
+
+  /* LAYOUT */
+  .layout {
+    display: flex;
+    min-height: 100vh;
+    padding-top: 60px;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border);
+    padding: 24px 12px;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 8px 12px 4px;
+    margin-top: 8px;
+  }
+
+  .sidebar-label:first-child { margin-top: 0; }
+
+  .sidebar-btn {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .sidebar-btn:hover { background: var(--card-hover); color: var(--text); }
+
+  .sidebar-btn.active {
+    background: var(--tag-bg);
+    color: var(--accent);
+    border: 1px solid rgba(99,102,241,0.2);
+  }
+
+  .sidebar-btn .icon { font-size: 16px; }
+
+  /* CONTENT */
+  .content {
+    margin-left: 220px;
+    flex: 1;
+    padding: 32px;
+    max-width: calc(100vw - 220px);
+  }
+
+  /* PAGE HEADER */
+  .page-header {
+    margin-bottom: 28px;
+  }
+
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .page-sub {
+    font-size: 14px;
+    color: var(--text3);
+  }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .stat-icon { font-size: 20px; margin-bottom: 10px; }
+
+  /* SECTION */
+  .section { margin-bottom: 40px; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* BTN */
+  .btn {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 9px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 4px 14px var(--accent-glow);
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+
+  .btn-ghost {
+    background: var(--bg3);
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { background: var(--card-hover); color: var(--text); }
+
+  .btn-danger {
+    background: rgba(239,68,68,0.12);
+    color: var(--danger);
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+
+  .btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+  .btn-success {
+    background: rgba(16,185,129,0.12);
+    color: var(--success);
+    border: 1px solid rgba(16,185,129,0.2);
+  }
+
+  .btn-success:hover { background: rgba(16,185,129,0.2); }
+
+  .btn-sm { height: 30px; padding: 0 12px; font-size: 12px; }
+
+  /* TABLE */
+  .table-wrap {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 12px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text2);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td { background: var(--card-hover); }
+
+  .td-title {
+    font-weight: 500;
+    color: var(--text);
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .td-actions { display: flex; gap: 6px; align-items: center; }
+
+  /* BADGE */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  .badge-green { background: rgba(16,185,129,0.12); color: var(--success); }
+  .badge-red { background: rgba(239,68,68,0.12); color: var(--danger); }
+  .badge-gray { background: var(--bg3); color: var(--text3); }
+  .badge-blue { background: var(--tag-bg); color: var(--accent); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(16px);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .modal-close {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text2);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover { background: var(--card-hover); color: var(--text); }
+
+  /* FORM */
+  .form-group { margin-bottom: 16px; }
+
+  .form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .form-textarea {
+    height: auto;
+    padding: 10px 12px;
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .form-select option { background: var(--bg2); color: var(--text); }
+
+  .form-hint {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+
+  .toggle-label { font-size: 13px; color: var(--text2); }
+
+  .toggle {
+    position: relative;
+    width: 40px; height: 22px;
+    cursor: pointer;
+  }
+
+  .toggle input { opacity: 0; width: 0; height: 0; }
+
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: var(--border);
+    border-radius: 11px;
+    transition: background 0.2s;
+  }
+
+  .toggle input:checked + .toggle-track { background: var(--accent); }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s;
+  }
+
+  .toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* UPLOAD AREA */
+  .upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .upload-area:hover { border-color: var(--accent); background: var(--tag-bg); }
+  .upload-area.dragover { border-color: var(--accent); background: var(--tag-bg); }
+
+  .upload-area input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+  }
+
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-text { font-size: 13px; color: var(--text2); }
+  .upload-hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .upload-name { font-size: 12px; color: var(--accent); margin-top: 8px; font-weight: 500; }
+
+  /* PROGRESS */
+  .progress-bar-wrap {
+    background: var(--bg3);
+    border-radius: 6px;
+    height: 6px;
+    overflow: hidden;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 6px;
+    transition: width 0.3s;
+    width: 0%;
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    z-index: 999;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .toast-item {
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    animation: slideIn 0.3s ease;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .toast-success { background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
+  .toast-error { background: #450a0a; color: #fca5a5; border: 1px solid #ef4444; }
+
+  /* COVER PREVIEW */
+  .cover-preview {
+    width: 80px; height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* EMPTY */
+  .empty-row td {
+    text-align: center;
+    padding: 40px;
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  /* ACCESS DENIED */
+  #access-denied {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+    color: var(--text2);
+    display: none;
+  }
+
+  #access-denied .icon { font-size: 48px; }
+  #access-denied h2 { font-family:'Syne',sans-serif; font-size:22px; color:var(--text); }
+  #access-denied p { font-size:14px; }
+  #access-denied a {
+    padding: 10px 20px;
+    background: var(--accent);
+    color: white;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* LOADING */
+  #loading-screen {
+    position: fixed; inset: 0;
+    background: var(--bg); z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+    transition: opacity 0.4s;
+  }
+
+  #loading-screen .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 800; color: var(--text);
+  }
+
+  .spinner {
+    width: 28px; height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading-screen.hidden { opacity: 0; pointer-events: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .content { margin-left: 0; max-width: 100vw; padding: 20px 16px; }
+    .form-row { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body class="theme-dark">
+
+<div id="loading-screen">
+  <div class="logo">⚙️ Admin Panel</div>
+  <div class="spinner"></div>
+</div>
+
+<div id="access-denied">
+  <div class="icon">🔒</div>
+  <h2>Erişim Reddedildi</h2>
+  <p>Bu sayfaya erişim yetkin yok.</p>
+  <a href="index.html">Ana Sayfaya Dön</a>
+</div>
+
+<!-- NAV -->
+<nav id="main-nav" style="display:none">
+  <div class="nav-left">
+    <a href="index.html" class="nav-logo">
+      <div class="dot"></div>
+      Highly Podcast
+    </a>
+    <span class="admin-badge">ADMIN</span>
+  </div>
+  <div class="nav-right">
+    <button class="theme-btn" onclick="cycleTheme()" id="theme-icon">🌙</button>
+    <a href="https://highly.com.tr" class="home-btn" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9,22 9,12 15,12 15,22"/>
+      </svg>
+      highly.com.tr
+    </a>
+  </div>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout" id="main-layout" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-label">Genel</div>
+    <button class="sidebar-btn active" onclick="showTab('dashboard')" id="tab-dashboard">
+      <span class="icon">📊</span> Dashboard
+    </button>
+
+    <div class="sidebar-label">İçerik</div>
+    <button class="sidebar-btn" onclick="showTab('series')" id="tab-series">
+      <span class="icon">🎙️</span> Seriler
+    </button>
+    <button class="sidebar-btn" onclick="showTab('episodes')" id="tab-episodes">
+      <span class="icon">🎵</span> Bölümler
+    </button>
+
+    <div class="sidebar-label">Reklam</div>
+    <button class="sidebar-btn" onclick="showTab('ads')" id="tab-ads">
+      <span class="icon">📢</span> Reklamlar
+    </button>
+
+    <div class="sidebar-label">Sistem</div>
+    <button class="sidebar-btn" onclick="showTab('admins')" id="tab-admins">
+      <span class="icon">👤</span> Adminler
+    </button>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content" id="content-area"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-box">
+    <!-- JS ile doldurulur -->
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://ttuxfivcwdpyvhmybbna.supabase.co';
+const SUPABASE_KEY = 'BURAYA_ANON_KEY';
+var _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// TEMA
+const themes = ['dark','glass','light'];
+const themeIcons = { dark:'🌙', glass:'✨', light:'☀️' };
+function getTheme() { return localStorage.getItem('highly_theme') || 'dark'; }
+function applyTheme(t) {
+  document.body.className = 'theme-' + t;
+  const btn = document.getElementById('theme-icon');
+  if (btn) btn.textContent = themeIcons[t];
+}
+function cycleTheme() {
+  const cur = getTheme();
+  const next = themes[(themes.indexOf(cur)+1) % themes.length];
+  localStorage.setItem('highly_theme', next);
+  applyTheme(next);
+}
+applyTheme(getTheme());
+
+// TOAST
+function toast(msg, type='success') {
+  const t = document.getElementById('toast');
+  const el = document.createElement('div');
+  el.className = 'toast-item toast-' + type;
+  el.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  t.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// MODAL
+function openModal(html) {
+  document.getElementById('modal-box').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+    }
+}
+
+function closeModalForce() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+  
+// TABS
+var currentTab = 'dashboard';
+
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('tab-' + tab);
+  if (btn) btn.classList.add('active');
+  renderTab(tab);
+}
+
+async function renderTab(tab) {
+  const content = document.getElementById('content-area');
+  content.innerHTML = '<div style="padding:60px;text-align:center;color:var(--text3)"><div class="spinner" style="margin:0 auto"></div></div>';
+
+  if (tab === 'dashboard') await renderDashboard();
+  else if (tab === 'series') await renderSeries();
+  else if (tab === 'episodes') await renderEpisodes();
+  else if (tab === 'ads') await renderAds();
+  else if (tab === 'admins') await renderAdmins();
+}
+
+// ========================
+// DASHBOARD
+// ========================
+async function renderDashboard() {
+  const [
+    { count: sc },
+    { count: ec },
+    { count: ac },
+    { data: dur },
+    { data: imp }
+  ] = await Promise.all([
+    _sb.from('podcast_series').select('*', { count:'exact', head:true }),
+    _sb.from('podcast_episodes').select('*', { count:'exact', head:true }),
+    _sb.from('ads').select('*', { count:'exact', head:true }).eq('is_active', true),
+    _sb.from('podcast_episodes').select('duration_seconds'),
+    _sb.from('ads').select('impressions')
+  ]);
+
+  const totalMins = dur ? Math.floor(dur.reduce((a,b) => a+(b.duration_seconds||0),0)/60) : 0;
+  const totalImp = imp ? imp.reduce((a,b) => a+(b.impressions||0),0) : 0;
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Genel istatistikler</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🎙️</div>
+        <div class="stat-label">Seri</div>
+        <div class="stat-value">${sc||0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎵</div>
+        <div class="stat-label">Bölüm</div>
+        <div class="stat-value">${ec||0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-label">Toplam Dakika</div>
+        <div class="stat-value">${totalMins}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📢</div>
+        <div class="stat-label">Aktif Reklam</div>
+        <div class="stat-value">${ac||0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👁️</div>
+        <div class="stat-label">Reklam Gösterim</div>
+        <div class="stat-value">${totalImp}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Hızlı Erişim</div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="showTab('series');openSeriesModal()">+ Yeni Seri</button>
+        <button class="btn btn-primary" onclick="showTab('episodes');openEpisodeModal()">+ Yeni Bölüm</button>
+        <button class="btn btn-primary" onclick="showTab('ads');openAdModal()">+ Yeni Reklam</button>
+      </div>
+    </div>
+  `;
+}
+
+// ========================
+// SERİLER
+// ========================
+async function renderSeries() {
+  const { data: series } = await _sb
+    .from('podcast_series')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  let rows = '';
+  if (!series || !series.length) {
+    rows = '<tr class="empty-row"><td colspan="5">Henüz seri yok.</td></tr>';
+  } else {
+    rows = series.map(s => `
+      <tr>
+        <td>
+          ${s.cover_url ? `<img src="${s.cover_url}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;vertical-align:middle;margin-right:8px;">` : '🎙️ '}
+          <span class="td-title">${s.title}</span>
+        </td>
+        <td>${s.slug}</td>
+        <td>
+          <span class="badge ${s.is_public ? 'badge-green' : 'badge-gray'}">
+            ${s.is_public ? '🌐 Herkese Açık' : '🔒 Üye'}
+          </span>
+        </td>
+        <td>${new Date(s.created_at).toLocaleDateString('tr-TR')}</td>
+        <td>
+          <div class="td-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openSeriesModal(${JSON.stringify(s).replace(/"/g,'&quot;')})">Düzenle</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteSeries(${s.id})">Sil</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Seriler</div>
+      <div class="page-sub">Podcast serilerini yönet</div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Tüm Seriler</div>
+        <button class="btn btn-primary" onclick="openSeriesModal()">+ Yeni Seri</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Başlık</th>
+              <th>Slug</th>
+              <th>Durum</th>
+              <th>Tarih</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function openSeriesModal(series) {
+  const isEdit = !!series;
+  openModal(`
+    <div class="modal-header">
+      <div class="modal-title">${isEdit ? 'Seriyi Düzenle' : 'Yeni Seri'}</div>
+      <button class="modal-close" onclick="closeModalForce()">×</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Başlık</label>
+      <input class="form-input" id="s-title" value="${isEdit ? series.title : ''}" placeholder="Seri adı">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Slug (URL)</label>
+      <input class="form-input" id="s-slug" value="${isEdit ? series.slug : ''}" placeholder="ornek-seri">
+      <div class="form-hint">Küçük harf, tire ile ayrılmış. Boş bırakırsan otomatik oluşur.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Açıklama</label>
+      <textarea class="form-textarea" id="s-desc" placeholder="Seri hakkında kısa açıklama...">${isEdit ? (series.description||'') : ''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kapak Görseli</label>
+      <div class="upload-area" id="cover-upload-area">
+        <input type="file" id="s-cover-file" accept="image/*" onchange="previewCover(this)">
+        <div class="upload-icon">🖼️</div>
+        <div class="upload-text">Görsel seç veya buraya sürükle</div>
+        <div class="upload-hint">PNG, JPG — Max 2MB</div>
+        <div class="upload-name" id="cover-file-name"></div>
+      </div>
+      ${isEdit && series.cover_url ? `<img id="cover-preview" class="cover-preview" src="${series.cover_url}" style="display:block">` : '<img id="cover-preview" class="cover-preview">'}
+      <div class="progress-bar-wrap" id="cover-progress-wrap">
+        <div class="progress-bar-fill" id="cover-progress"></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="toggle-row">
+        <span class="toggle-label">Herkese Açık</span>
+        <label class="toggle">
+          <input type="checkbox" id="s-public" ${isEdit ? (series.is_public ? 'checked' : '') : 'checked'}>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalForce()">İptal</button>
+      <button class="btn btn-primary" onclick="saveSeries(${isEdit ? series.id : 'null'}, '${isEdit ? (series.cover_url||'') : ''}')">
+        ${isEdit ? 'Kaydet' : 'Oluştur'}
+      </button>
+    </div>
+  `);
+}
+
+function previewCover(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById('cover-preview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+    document.getElementById('cover-file-name').textContent = input.files[0].name;
+  }
+}
+
+async function uploadFile(file, bucket, path, progressId) {
+  const wrap = document.getElementById(progressId + '-wrap');
+  const bar = document.getElementById(progressId);
+  if (wrap) wrap.style.display = 'block';
+  if (bar) bar.style.width = '30%';
+
+  const { data, error } = await _sb.storage.from(bucket).upload(path, file, { upsert: true });
+
+  if (bar) bar.style.width = '100%';
+  if (error) throw error;
+
+  const { data: urlData } = _sb.storage.from(bucket).getPublicUrl(path);
+  return urlData.publicUrl;
+}
+
+async function saveSeries(id, existingCoverUrl) {
+  const title = document.getElementById('s-title').value.trim();
+  if (!title) { toast('Başlık zorunlu!', 'error'); return; }
+
+  let slug = document.getElementById('s-slug').value.trim();
+  if (!slug) slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+  const desc = document.getElementById('s-desc').value.trim();
+  const isPublic = document.getElementById('s-public').checked;
+  const coverFile = document.getElementById('s-cover-file').files[0];
+
+  let coverUrl = existingCoverUrl || null;
+
+  try {
+    if (coverFile) {
+      const path = 'covers/' + Date.now() + '_' + coverFile.name.replace(/\s/g,'_');
+      coverUrl = await uploadFile(coverFile, 'podcast-covers', path, 'cover-progress');
+    }
+
+    const payload = { title, slug, description: desc, cover_url: coverUrl, is_public: isPublic };
+
+    if (id) {
+      await _sb.from('podcast_series').update(payload).eq('id', id);
+      toast('Seri güncellendi!');
+    } else {
+      await _sb.from('podcast_series').insert(payload);
+      toast('Seri oluşturuldu!');
+    }
+
+    closeModalForce();
+    renderSeries();
+  } catch(e) {
+    toast('Hata: ' + e.message, 'error');
+  }
+}
+
+async function deleteSeries(id) {
+  if (!confirm('Bu seriyi silmek istediğinden emin misin? Tüm bölümler de silinir!')) return;
+  const { error } = await _sb.from('podcast_series').delete().eq('id', id);
+  if (error) { toast('Silinemedi: ' + error.message, 'error'); return; }
+  toast('Seri silindi.');
+  renderSeries();
+}
+
+// ========================
+// BÖLÜMLER
+// ========================
+async function renderEpisodes() {
+  const { data: eps } = await _sb
+    .from('podcast_episodes')
+    .select('*, podcast_series(title)')
+    .order('created_at', { ascending: false });
+
+  let rows = '';
+  if (!eps || !eps.length) {
+    rows = '<tr class="empty-row"><td colspan="6">Henüz bölüm yok.</td></tr>';
+  } else {
+    rows = eps.map(ep => {
+      const dur = ep.duration_seconds ? Math.floor(ep.duration_seconds/60) + ' dk' : '—';
+      return `
+        <tr>
+          <td>
+            ${ep.cover_url ? `<img src="${ep.cover_url}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;vertical-align:middle;margin-right:8px;">` : '🎵 '}
+            <span class="td-title">${ep.title}</span>
+          </td>
+          <td>${ep.podcast_series?.title || '—'}</td>
+          <td>${ep.episode_number}</td>
+          <td>${dur}</td>
+          <td>${new Date(ep.created_at).toLocaleDateString('tr-TR')}</td>
+          <td>
+            <div class="td-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openEpisodeModal(${JSON.stringify(ep).replace(/"/g,'&quot;')})">Düzenle</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteEpisode(${ep.id})">Sil</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Bölümler</div>
+      <div class="page-sub">Podcast bölümlerini yönet</div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Tüm Bölümler</div>
+        <button class="btn btn-primary" onclick="openEpisodeModal()">+ Yeni Bölüm</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Başlık</th>
+              <th>Seri</th>
+              <th>#</th>
+              <th>Süre</th>
+              <th>Tarih</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+async function openEpisodeModal(ep) {
+  const isEdit = !!ep;
+
+  // Serileri çek
+  const { data: series } = await _sb.from('podcast_series').select('id,title').order('title');
+  const seriesOptions = (series||[]).map(s =>
+    `<option value="${s.id}" ${isEdit && ep.series_id == s.id ? 'selected' : ''}>${s.title}</option>`
+  ).join('');
+
+  openModal(`
+    <div class="modal-header">
+      <div class="modal-title">${isEdit ? 'Bölümü Düzenle' : 'Yeni Bölüm'}</div>
+      <button class="modal-close" onclick="closeModalForce()">×</button>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Seri</label>
+        <select class="form-select" id="ep-series">${seriesOptions}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bölüm No</label>
+        <input class="form-input" id="ep-num" type="number" min="1" value="${isEdit ? ep.episode_number : ''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Başlık</label>
+      <input class="form-input" id="ep-title" value="${isEdit ? ep.title : ''}" placeholder="Bölüm adı">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Açıklama</label>
+      <textarea class="form-textarea" id="ep-desc" placeholder="Bölüm açıklaması...">${isEdit ? (ep.description||'') : ''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ses Dosyası (MP3/M4A)</label>
+      <div class="upload-area">
+        <input type="file" id="ep-audio-file" accept="audio/*" onchange="showAudioName(this)">
+        <div class="upload-icon">🎵</div>
+        <div class="upload-text">${isEdit && ep.audio_url ? 'Yeni dosya seç (değiştirmek için)' : 'Ses dosyası seç'}</div>
+        <div class="upload-hint">MP3, M4A, WAV</div>
+        <div class="upload-name" id="audio-file-name"></div>
+      </div>
+      <div class="progress-bar-wrap" id="audio-progress-wrap">
+        <div class="progress-bar-fill" id="audio-progress"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Süre (saniye)</label>
+        <input class="form-input" id="ep-duration" type="number" min="0" value="${isEdit ? (ep.duration_seconds||'') : ''}" placeholder="Örn: 1800">
+        <div class="form-hint">Ses yükleyince otomatik doldurulur.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kapak Görseli</label>
+        <div class="upload-area" style="padding:12px">
+          <input type="file" id="ep-cover-file" accept="image/*" onchange="previewEpCover(this)">
+          <div class="upload-text" style="font-size:12px">Görsel seç</div>
+          <div class="upload-name" id="ep-cover-name"></div>
+        </div>
+        ${isEdit && ep.cover_url ? `<img id="ep-cover-preview" class="cover-preview" src="${ep.cover_url}" style="display:block">` : '<img id="ep-cover-preview" class="cover-preview">'}
+        <div class="progress-bar-wrap" id="ep-cover-progress-wrap">
+          <div class="progress-bar-fill" id="ep-cover-progress"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalForce()">İptal</button>
+      <button class="btn btn-primary" onclick="saveEpisode(${isEdit ? ep.id : 'null'}, '${isEdit ? (ep.audio_url||'') : ''}', '${isEdit ? (ep.cover_url||'') : ''}')">
+        ${isEdit ? 'Kaydet' : 'Yükle'}
+      </button>
+    </div>
+  `);
+}
+
+function showAudioName(input) {
+  if (input.files[0]) {
+    document.getElementById('audio-file-name').textContent = input.files[0].name;
+    // Süreyi otomatik oku
+    const url = URL.createObjectURL(input.files[0]);
+    const audio = new Audio(url);
+    audio.addEventListener('loadedmetadata', () => {
+      document.getElementById('ep-duration').value = Math.round(audio.duration);
+      URL.revokeObjectURL(url);
+    });
+  }
+}
+
+function previewEpCover(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById('ep-cover-preview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+    document.getElementById('ep-cover-name').textContent = input.files[0].name;
+  }
+}
+
+async function saveEpisode(id, existingAudioUrl, existingCoverUrl) {
+  const title = document.getElementById('ep-title').value.trim();
+  const seriesId = document.getElementById('ep-series').value;
+  const epNum = parseInt(document.getElementById('ep-num').value);
+  const duration = parseInt(document.getElementById('ep-duration').value) || 0;
+  const desc = document.getElementById('ep-desc').value.trim();
+  const audioFile = document.getElementById('ep-audio-file').files[0];
+  const coverFile = document.getElementById('ep-cover-file').files[0];
+
+  if (!title) { toast('Başlık zorunlu!', 'error'); return; }
+  if (!seriesId) { toast('Seri seç!', 'error'); return; }
+  if (!epNum) { toast('Bölüm numarası gir!', 'error'); return; }
+  if (!id && !audioFile) { toast('Ses dosyası zorunlu!', 'error'); return; }
+
+  let audioUrl = existingAudioUrl || null;
+  let coverUrl = existingCoverUrl || null;
+
+  try {
+    if (audioFile) {
+      const path = 'episodes/' + Date.now() + '_' + audioFile.name.replace(/\s/g,'_');
+      audioUrl = await uploadFile(audioFile, 'podcast-audio', path, 'audio-progress');
+    }
+
+    if (coverFile) {
+      const path = 'ep-covers/' + Date.now() + '_' + coverFile.name.replace(/\s/g,'_');
+      coverUrl = await uploadFile(coverFile, 'podcast-covers', path, 'ep-cover-progress');
+    }
+
+    const payload = {
+      title,
+      series_id: seriesId,
+      episode_number: epNum,
+      duration_seconds: duration,
+      description: desc,
+      audio_url: audioUrl,
+      cover_url: coverUrl
+    };
+
+    if (id) {
+      await _sb.from('podcast_episodes').update(payload).eq('id', id);
+      toast('Bölüm güncellendi!');
+    } else {
+      await _sb.from('podcast_episodes').insert(payload);
+      toast('Bölüm yüklendi!');
+    }
+
+    closeModalForce();
+    renderEpisodes();
+  } catch(e) {
+    toast('Hata: ' + e.message, 'error');
+  }
+}
+
+async function deleteEpisode(id) {
+  if (!confirm('Bu bölümü silmek istediğinden emin misin?')) return;
+  const { error } = await _sb.from('podcast_episodes').delete().eq('id', id);
+  if (error) { toast('Silinemedi: ' + error.message, 'error'); return; }
+  toast('Bölüm silindi.');
+  renderEpisodes();
+}
+
+// ========================
+// REKLAMLAR
+// ========================
+async function renderAds() {
+  const { data: ads } = await _sb
+    .from('ads')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  let rows = '';
+  if (!ads || !ads.length) {
+    rows = '<tr class="empty-row"><td colspan="6">Henüz reklam yok.</td></tr>';
+  } else {
+    const lengthLabels = { medium: 'Orta (15-40dk)', long: 'Uzun (40dk+)' };
+    rows = ads.map(ad => `
+      <tr>
+        <td><span class="td-title">${ad.title}</span></td>
+        <td>${ad.advertiser_name}</td>
+        <td>
+          <span class="badge badge-blue">${lengthLabels[ad.target_length] || ad.target_length}</span>
+        </td>
+        <td>${ad.impressions || 0} gösterim</td>
+        <td>
+          <span class="badge ${ad.is_active ? 'badge-green' : 'badge-red'}">
+            ${ad.is_active ? '✅ Aktif' : '⏸ Pasif'}
+          </span>
+        </td>
+        <td>
+          <div class="td-actions">
+            <button class="btn ${ad.is_active ? 'btn-ghost' : 'btn-success'} btn-sm" onclick="toggleAd(${ad.id}, ${ad.is_active})">
+              ${ad.is_active ? 'Durdur' : 'Aktifleştir'}
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="openAdModal(${JSON.stringify(ad).replace(/"/g,'&quot;')})">Düzenle</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAd(${ad.id})">Sil</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Reklamlar</div>
+      <div class="page-sub">Reklam sistemi yönetimi</div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title" style="font-size:14px;color:var(--text2);font-family:'DM Sans',sans-serif;font-weight:400">
+          🔹 Kısa podcastlere (0-15dk) reklam girmez &nbsp;·&nbsp; Orta (15-40dk): %50'sinde 1 reklam &nbsp;·&nbsp; Uzun (40dk+): %33 ve %66'sında 2 reklam
+        </div>
+        <button class="btn btn-primary" onclick="openAdModal()">+ Yeni Reklam</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Başlık</th>
+              <th>Reklam Veren</th>
+              <th>Hedef Uzunluk</th>
+              <th>Gösterim</th>
+              <th>Durum</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function openAdModal(ad) {
+  const isEdit = !!ad;
+  openModal(`
+    <div class="modal-header">
+      <div class="modal-title">${isEdit ? 'Reklamı Düzenle' : 'Yeni Reklam'}</div>
+      <button class="modal-close" onclick="closeModalForce()">×</button>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Reklam Başlığı</label>
+        <input class="form-input" id="ad-title" value="${isEdit ? ad.title : ''}" placeholder="İç kullanım için ad">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reklam Veren</label>
+        <input class="form-input" id="ad-adv" value="${isEdit ? ad.advertiser_name : ''}" placeholder="Şirket adı">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hedef Podcast Uzunluğu</label>
+      <select class="form-select" id="ad-length">
+        <option value="medium" ${isEdit && ad.target_length==='medium' ? 'selected' : ''}>Orta (15–40 dk)</option>
+        <option value="long" ${isEdit && ad.target_length==='long' ? 'selected' : ''}>Uzun (40dk+)</option>
+      </select>
+      <div class="form-hint">Reklam sadece bu uzunluktaki podcastlerde çalar.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reklam Ses Dosyası</label>
+      <div class="upload-area">
+        <input type="file" id="ad-audio-file" accept="audio/*" onchange="showAdAudioName(this)">
+        <div class="upload-icon">📢</div>
+        <div class="upload-text">${isEdit && ad.audio_url ? 'Değiştirmek için seç' : 'Reklam ses dosyası seç'}</div>
+        <div class="upload-hint">MP3, M4A — Max 10MB</div>
+        <div class="upload-name" id="ad-audio-name"></div>
+      </div>
+      <div class="progress-bar-wrap" id="ad-audio-progress-wrap">
+        <div class="progress-bar-fill" id="ad-audio-progress"></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Banner Görseli (İsteğe Bağlı)</label>
+      <div class="upload-area" style="padding:12px">
+        <input type="file" id="ad-banner-file" accept="image/*" onchange="previewAdBanner(this)">
+        <div class="upload-text" style="font-size:12px">Banner görseli seç</div>
+        <div class="upload-name" id="ad-banner-name"></div>
+      </div>
+      ${isEdit && ad.banner_url ? `<img id="ad-banner-preview" class="cover-preview" src="${ad.banner_url}" style="display:block;width:100%;height:auto;max-height:80px;border-radius:8px;margin-top:8px">` : '<img id="ad-banner-preview" class="cover-preview">'}
+      <div class="progress-bar-wrap" id="ad-banner-progress-wrap">
+        <div class="progress-bar-fill" id="ad-banner-progress"></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="toggle-row">
+        <span class="toggle-label">Aktif</span>
+        <label class="toggle">
+          <input type="checkbox" id="ad-active" ${isEdit ? (ad.is_active ? 'checked' : '') : 'checked'}>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalForce()">İptal</button>
+      <button class="btn btn-primary" onclick="saveAd(${isEdit ? ad.id : 'null'}, '${isEdit ? (ad.audio_url||'') : ''}', '${isEdit ? (ad.banner_url||'') : ''}')">
+        ${isEdit ? 'Kaydet' : 'Ekle'}
+      </button>
+    </div>
+  `);
+}
+
+function showAdAudioName(input) {
+  if (input.files[0]) document.getElementById('ad-audio-name').textContent = input.files[0].name;
+}
+
+function previewAdBanner(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById('ad-banner-preview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      img.style.width = '100%';
+      img.style.maxHeight = '80px';
+      img.style.borderRadius = '8px';
+      img.style.marginTop = '8px';
+    };
+    reader.readAsDataURL(input.files[0]);
+    document.getElementById('ad-banner-name').textContent = input.files[0].name;
+  }
+}
+
+async function saveAd(id, existingAudioUrl, existingBannerUrl) {
+  const title = document.getElementById('ad-title').value.trim();
+  const adv = document.getElementById('ad-adv').value.trim();
+  const length = document.getElementById('ad-length').value;
+  const isActive = document.getElementById('ad-active').checked;
+  const audioFile = document.getElementById('ad-audio-file').files[0];
+  const bannerFile = document.getElementById('ad-banner-file').files[0];
+
+  if (!title) { toast('Başlık zorunlu!', 'error'); return; }
+  if (!adv) { toast('Reklam veren adı zorunlu!', 'error'); return; }
+  if (!id && !audioFile) { toast('Ses dosyası zorunlu!', 'error'); return; }
+
+  let audioUrl = existingAudioUrl || null;
+  let bannerUrl = existingBannerUrl || null;
+
+  try {
+    if (audioFile) {
+      const path = 'audio/' + Date.now() + '_' + audioFile.name.replace(/\s/g,'_');
+      audioUrl = await uploadFile(audioFile, 'podcast-ads', path, 'ad-audio-progress');
+    }
+
+    if (bannerFile) {
+      const path = 'banners/' + Date.now() + '_' + bannerFile.name.replace(/\s/g,'_');
+      bannerUrl = await uploadFile(bannerFile, 'podcast-ads', path, 'ad-banner-progress');
+    }
+
+    const payload = {
+      title,
+      advertiser_name: adv,
+      target_length: length,
+      audio_url: audioUrl,
+      banner_url: bannerUrl,
+      is_active: isActive
+    };
+
+    if (id) {
+      await _sb.from('ads').update(payload).eq('id', id);
+      toast('Reklam güncellendi!');
+    } else {
+      await _sb.from('ads').insert(payload);
+      toast('Reklam eklendi!');
+    }
+
+    closeModalForce();
+    renderAds();
+  } catch(e) {
+    toast('Hata: ' + e.message, 'error');
+  }
+}
+
+async function toggleAd(id, currentActive) {
+  await _sb.from('ads').update({ is_active: !currentActive }).eq('id', id);
+  toast(currentActive ? 'Reklam durduruldu.' : 'Reklam aktifleştirildi.');
+  renderAds();
+}
+
+async function deleteAd(id) {
+  if (!confirm('Bu reklamı silmek istediğinden emin misin?')) return;
+  await _sb.from('ads').delete().eq('id', id);
+  toast('Reklam silindi.');
+  renderAds();
+}
+
+// ========================
+// ADMİNLER
+// ========================
+async function renderAdmins() {
+  const { data: admins } = await _sb
+    .from('podcast_admins')
+    .select('id, user_id, created_at');
+
+  // user id'lerden username çek
+  let userMap = {};
+  if (admins && admins.length) {
+    const ids = admins.map(a => a.user_id);
+    const { data: users } = await _sb.from('users').select('id,username,email').in('id', ids);
+    if (users) users.forEach(u => { userMap[u.id] = u; });
+  }
+
+  let rows = '';
+  if (!admins || !admins.length) {
+    rows = '<tr class="empty-row"><td colspan="4">Admin yok.</td></tr>';
+  } else {
+    rows = admins.map(a => {
+      const u = userMap[a.user_id] || {};
+      return `
+        <tr>
+          <td>${a.user_id}</td>
+          <td>${u.username || '—'}</td>
+          <td>${u.email || '—'}</td>
+          <td>
+            ${a.user_id != 9 ? `<button class="btn btn-danger btn-sm" onclick="removeAdmin(${a.id})">Kaldır</button>` : '<span class="badge badge-blue">Süper Admin</span>'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="page-header">
+      <div class="page-title">Adminler</div>
+      <div class="page-sub">Panel erişimi olan kullanıcılar</div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Admin Listesi</div>
+        <button class="btn btn-primary" onclick="openAddAdminModal()">+ Admin Ekle</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>User ID</th><th>Kullanıcı Adı</th><th>E-posta</th><th>İşlem</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function openAddAdminModal() {
+  openModal(`
+    <div class="modal-header">
+      <div class="modal-title">Admin Ekle</div>
+      <button class="modal-close" onclick="closeModalForce()">×</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kullanıcı ID</label>
+      <input class="form-input" id="new-admin-id" type="number" placeholder="Supabase user ID">
+      <div class="form-hint">Kullanıcının users tablosundaki ID'sini gir.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModalForce()">İptal</button>
+      <button class="btn btn-primary" onclick="addAdmin()">Ekle</button>
+    </div>
+  `);
+}
+
+async function addAdmin() {
+  const userId = parseInt(document.getElementById('new-admin-id').value);
+  if (!userId) { toast('Geçerli bir ID gir!', 'error'); return; }
+
+  const { error } = await _sb.from('podcast_admins').insert({ user_id: userId });
+  if (error) { toast('Eklenemedi: ' + error.message, 'error'); return; }
+  toast('Admin eklendi!');
+  closeModalForce();
+  renderAdmins();
+}
+
+async function removeAdmin(id) {
+  if (!confirm('Bu admini kaldırmak istediğinden emin misin?')) return;
+  await _sb.from('podcast_admins').delete().eq('id', id);
+  toast('Admin kaldırıldı.');
+  renderAdmins();
+}
+
+// ========================
+// AUTH & INIT
+// ========================
+async function init() {
+  const { data: { session } } = await _sb.auth.getSession();
+
+  if (!session || !session.user) {
+    window.location.href = 'giris.html';
+    return;
+  }
+
+  // Admin kontrolü
+  const { data: user } = await _sb.from('users').select('id').eq('email', session.user.email).single();
+
+  if (!user) {
+    showAccessDenied();
+    return;
+  }
+
+  const { data: adminRow } = await _sb.from('podcast_admins').select('id').eq('user_id', user.id).single();
+
+  if (!adminRow) {
+    showAccessDenied();
+    return;
+  }
+
+  // Erişim tamam
+  document.getElementById('main-nav').style.display = 'flex';
+  document.getElementById('main-layout').style.display = 'flex';
+
+  const ls = document.getElementById('loading-screen');
+  ls.classList.add('hidden');
+  setTimeout(() => ls.remove(), 500);
+
+  renderTab('dashboard');
+}
+
+function showAccessDenied() {
+  document.getElementById('access-denied').style.display = 'flex';
+  const ls = document.getElementById('loading-screen');
+  ls.classList.add('hidden');
+  setTimeout(() => ls.remove(), 500);
+}
+
+init();
+</script>
+</body>
+</html>
